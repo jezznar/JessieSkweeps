@@ -1,0 +1,30 @@
+prontera,155,181,5	script	PvP	757,{
+setarray .@Map$[0],"pvp_y_1-1","pvp_y_1-2";
+mes "[PvP Warper]";
+mes "Select your room";
+next;
+
+.@i = select(
+     "Room 1 ["+getmapusers(.@Map$[0])+"/50]",
+	 "Room 2 ["+getmapusers(.@Map$[1])+"/50]");
+
+if( getmapusers( .@Map$[.@i-1] ) >= 50 ){
+	mes "Sorry, room Full.";
+	close;
+}else
+	switch ( .@i ) {
+	      case 1: warp "pvp_y_1-1",0,0;
+		       break;
+          case 2: warp "pvp_y_1-2",0,0;
+		       break;
+	}
+end;
+
+OnPCKillEvent:
+for( set .@i,0; .@i < getarraysize( .@Map$ ); set .@i,.@i + 1 )
+	if( strcharinfo(3) == .@Map$[.@i] ){
+		announce "["+strcharinfo(0)+"] has killed ["+rid2name(killedrid)+"] in "+strcharinfo(3)+"",0;
+		break;
+	}
+end;
+}

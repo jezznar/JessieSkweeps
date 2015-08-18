@@ -1,0 +1,16 @@
+//-----------------------------------------
+// GRF Files
+// Add as many as needed.
+//-----------------------------------------
+//grf: C:\Program Files\Gravity\RO\rdata.grf
+//grf: C:\Program Files\Gravity\RO\data.grf
+
+//-----------------------------------------
+// Data Directory
+// Use the base folder, not the data\ path.
+//-----------------------------------------
+//data_dir: C:\Program Files\Gravity\RO\
+grf: C:\Users\Jessnar.Sinues\Documents\GitHub\rathenaTest\conf\grf\rdata.grf
+grf: C:\Users\Jessnar.Sinues\Documents\GitHub\rathenaTest\conf\grf\data.grf
+grf: C:\Users\Jessnar.Sinues\Documents\GitHub\rathenaTest\conf\grf\hercules.grf
+grf: C:\Users\Jessnar.Sinues\Documents\GitHub\rathenaTest\conf\grf\custom.grf
