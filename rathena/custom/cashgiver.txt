@@ -1,0 +1,17 @@
+prontera,155,180,5	script	CashGiver	460,{
+	mes "[CashGiver]";
+	mes "Hey bud want some cash?";
+	next;
+	switch (select("Yes:No")) {
+		case 1:
+			set #CASHPOINTS, #CASHPOINTS + 100;
+			break;
+		case 2:
+			mes "Okay. Let me steal some from ya.";
+			set #CASHPOINTS, #CASHPOINTS - 100;
+			break;
+	
+	}
+	close;
+
+}

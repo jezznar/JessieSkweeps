@@ -1,0 +1,26 @@
+-	script	atcmd_custom	-1,{
+OnInit:
+	bindatcmd "changebrate",strnpcinfo(3)+"::Onbrate";
+	bindatcmd "changedrate",strnpcinfo(3)+"::Ondrate";
+	bindatcmd "changeodrate",strnpcinfo(3)+"::OnOdrate";
+	end;
+Onbrate:
+	setbattleflag "base_exp_rate", 500*100;
+	end;
+Ondrate:
+	setbattleflag "item_rate_common", 250*100 ;
+	setbattleflag "item_rate_heal", 500*100;
+	setbattleflag "item_rate_use", 500*100;
+	setbattleflag "item_rate_equip", 250*100;
+	setbattleflag "item_rate_card", 250*100;
+	atcommand "@reloadmobdb";
+	end;	
+OnOrate:
+	setbattleflag "item_rate_common", 50*100 ;
+	setbattleflag "item_rate_heal", 100*100;
+	setbattleflag "item_rate_use", 100*100;
+	setbattleflag "item_rate_equip", 50*100;
+	setbattleflag "item_rate_card", 50*100;
+	atcommand "@reloadmobdb";
+	end;
+}

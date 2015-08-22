@@ -1,0 +1,1090 @@
+prontera,159,193,5	script	Apprentice	700,{
+function Healer;
+function Warper;
+function Identifier;
+function Stylist;
+OnInit:
+if ($@wait == 0) {
+	waitingroom "Utilities!",0;
+	set $@wait,1;
+}
+
+
+
+if ($@wait) {
+	mes "[All-in-One]";
+	mes "Hi! What can I do for you today?";
+	next;
+	Switch (Select("Heal&Buff[Free]:Warp[Free]:Identify[100z/item]:Change Style[Free]:Nothing Really..")) {
+		case 1:
+			Healer();
+			break;
+		case 2:
+			Warper();
+			break;
+		case 3:
+			Identifier();
+			break;
+		case 4:
+			Stylist();
+			break;
+		default:
+			mes "[All-in-One]";
+			mes "All right. See ya around!";
+			break;
+
+	}
+		
+	close;
+}
+	
+
+Function Healer {
+	.@Price = 0;	// Zeny required for heal
+	.@Buffs = 1;	// Also buff players? (1: yes / 0: no)
+	.@Delay = 0;	// Heal delay, in seconds
+
+	if (@HD > gettimetick(2))
+		end;
+	if (.@Price) {
+		message strcharinfo(0), "Healing costs " + callfunc("F_InsertComma",.@Price) + " Zeny.";
+		if (Zeny < .@Price)
+			end;
+		if (select("^0055FFHeal^000000:^777777Cancel^000000") == 2)
+			end;
+		Zeny -= .@Price;
+	}
+	specialeffect2 EF_HEAL2;
+	percentheal 100,100;
+	if (.@Buffs) {
+		specialeffect2 EF_INCAGILITY;
+		sc_start SC_INCREASEAGI,240000,10;
+		specialeffect2 EF_BLESSING;
+		sc_start SC_BLESSING,240000,10;
+	}
+	if (.@Delay)
+		@HD = gettimetick(2) + .@Delay;
+	end;
+}
+
+Function Warper {
+function Go; function Disp; function Pick; function Restrict;
+
+// --------------------------------------------------
+//	Main Menu:
+// --------------------------------------------------
+
+menu	"Last Warp ^777777["+lastwarp$+"]^000000",-,
+    	" ~ Towns",Towns,
+    	" ~ Fields",Fields,
+    	" ~ Dungeons",Dungeons,
+    	" ~ Guild Castles",Castles,
+    	" ~ Guild Dungeons",Guild_Dungeons,
+    	" ~ Instances",Instances,
+    	" ~ Special Areas",Special;
+
+	if (lastwarp$ == "")
+		message strcharinfo(0),"You haven't warped anywhere yet.";
+	else
+		warp lastwarp$,lastwarpx,lastwarpy;
+	end;
+
+// ------------------- Functions -------------------
+// * Go("<map>",<x>,<y>);
+//	~ Warps directly to a map.
+//
+// * Disp("<Menu Option>",<first option>,<last option>);
+// * Pick("<map_prefix>"{,<index offset>});
+//	~ Dynamic menu and map selection (auto-numbered).
+//
+// * Disp("<Option 1>:<Option 2>:<etc.>");
+// * Pick("","<map1>","<map2>","<etc.>");
+//	~ Manual menu and map selection (listed).
+//
+// * Restrict("<RE | Pre-RE>"{,<menu option numbers>});
+//	~ Only allows map for Renewal or Pre-Renewal modes.
+//     If menu option numbers are given, only those maps
+//     will be restricted (i.e. not for "Go").
+//
+// Other notes:
+//   ~ Array @c[] holds all (x,y) coordinates.
+//   ~ Use @c[2] EXCEPT when maps begin dynamically
+//	  at 0: use @c[0] and Pick() offset 1.
+// --------------------------------------------------
+
+function Go {
+	set lastwarp$, getarg(0);
+	set lastwarpx, getarg(1,0);
+	set lastwarpy, getarg(2,0);
+	warp getarg(0),getarg(1,0),getarg(2,0);
+	end;
+}
+function Disp {
+	if (getargcount() < 3)
+		set @menu$, getarg(0);
+	else {
+		set @menu$,"";
+		for (set .@i,getarg(1); .@i<=getarg(2); set .@i,.@i+1)
+			set @menu$, @menu$+getarg(0)+" "+.@i+":";
+	}
+	return;
+}
+function Pick {
+	set .@warp_block,@warp_block;
+	set @warp_block,0;
+	set .@select, select(@menu$);
+	if (getarg(0) == "") {
+		set .@i, .@select;
+		set .@map$, getarg(.@i);
+	} else {
+		set .@i, .@select-getarg(1,0);
+		set .@map$, getarg(0)+((.@i<10)?"0":"")+.@i;
+	}
+	if (.@warp_block & (1<<.@select)) {
+		message strcharinfo(0),"This map is not enabled in "+((checkre(0))?"":"Pre-")+"Renewal.";
+		end;
+	}
+	set .@x, @c[.@i*2];
+	set .@y, @c[.@i*2+1];
+	deletearray @c[0],getarraysize(@c);
+	Go(.@map$,.@x,.@y);
+}
+function Restrict {
+	if ((getarg(0) == "RE" && !checkre(0)) || (getarg(0) == "Pre-RE" && checkre(0))) {
+		if (getarg(1,0)) {
+			set @warp_block,0;
+			for (set .@i,1; .@i<getargcount(); set .@i,.@i+1)
+				set @warp_block, @warp_block | (1<<getarg(.@i));
+		} else {
+			message strcharinfo(0),"This map is not enabled in "+((checkre(0))?"":"Pre-")+"Renewal.";
+			end;
+		}
+	}
+	return;
+}
+
+// --------------------------------------------------
+	Towns:
+// --------------------------------------------------
+menu	"Prontera",T1, "Alberta",T2, "Aldebaran",T3, "Amatsu",T4, "Ayothaya",T5,
+    	"Brasilis",T6, "Comodo",T7, "Dewata",T8, "Eclage",T9, "Einbech",T10, 
+    	"Einbroch",T11, "El Dicastes",T12, "Geffen",T13, "Gonryun",T14, "Hugel",T15,
+    	"Izlude",T16, "Jawaii",T17, "Lighthalzen",T18, "Louyang",T19, "Lutie",T20,
+    	"Malangdo",T21, "Malaya",T22, "Manuk",T23, "Midgarts Expedition Camp",T24,
+    	"Mora",T25, "Morroc",T26, "Moscovia",T27, "Nameless Island",T28,
+    	"Niflheim",T29, "Payon",T30, "Rachel",T31, "Splendide",T32, "Thor Camp",T33,
+    	"Umbala",T34, "Veins",T35, "Yuno",T36;
+
+T1: Go("prontera",155,183);
+T2: Go("alberta",28,234);
+T3: Go("aldebaran",140,131);
+T4: Go("amatsu",198,84);
+T5: Go("ayothaya",208,166);
+T6: Restrict("RE");
+	Go("brasilis",196,217);
+T7: Go("comodo",209,143);
+T8: Restrict("RE");
+	Go("dewata",200,180);
+T9: Restrict("RE");
+	Go("ecl_in01",48,53);
+T10: Go("einbech",63,35);
+T11: Go("einbroch",64,200);
+T12: Restrict("RE");
+	 Go("dicastes01",198,187);
+T13: Go("geffen",119,59);
+T14: Go("gonryun",160,120);
+T15: Go("hugel",96,145);
+T16: Go("izlude",128,(checkre(3)?146:114));
+T17: Go("jawaii",251,132);
+T18: Go("lighthalzen",158,92);
+T19: Go("louyang",217,100);
+T20: Go("xmas",147,134);
+T21: Restrict("RE");
+	 Go("malangdo",140,114);
+T22: Restrict("RE");
+	 Go("malaya",231,200);
+T23: Go("manuk",282,138);
+T24: Go("mid_camp",210,288);
+T25: Restrict("RE");
+	 Go("mora",55,146);
+T26: Go("morocc",156,93);
+T27: Go("moscovia",223,184);
+T28: Go("nameless_n",256,215);
+T29: Go("niflheim",202,174);
+T30: Go("payon",179,100);
+T31: Go("rachel",130,110);
+T32: Go("splendide",201,147);
+T33: Go("thor_camp",246,68);
+T34: Go("umbala",97,153);
+T35: Go("veins",216,123);
+T36: Go("yuno",157,51);
+
+// --------------------------------------------------
+	Fields:
+// --------------------------------------------------
+menu	"Amatsu Fields",F1, "Ayothaya Fields",F2, "Bifrost Fields", F3,
+    	"Brasilis Fields",F4, "Comodo Fields",F5, "Dewata Fields",F6,
+    	"Eclage Fields",F7, "Einbroch Fields",F8, "El Dicastes Fields",F9,
+    	"Geffen Fields",F10, "Gonryun Fields",F11, "Hugel Fields",F12,
+    	"Lighthalzen Fields",F13, "Louyang Field",F14, "Lutie Field",F15,
+    	"Malaya Fields",F16, "Manuk Fields",F17, "Mjolnir Fields",F18,
+    	"Moscovia Fields",F19, "Niflheim Fields",F20, "Payon Forests",F21,
+    	"Prontera Fields",F22, "Rachel Fields",F23, "Sograt Deserts",F24,
+    	"Splendide Fields",F25, "Umbala Fields",F26, "Veins Fields",F27,
+    	"Yuno Fields",F28;
+
+F1: setarray @c[2],190,197;
+	Disp("Amatsu Field",1,1); Pick("ama_fild");
+F2: setarray @c[2],173,134,212,150;
+	Disp("Ayothaya Field",1,2); Pick("ayo_fild");
+F3: Restrict("RE");
+	setarray @c[2],193,220,220,187;
+	Disp("Bifrost Field",1,2); Pick("bif_fild");
+F4: Restrict("RE");
+	setarray @c[2],74,32;
+	Disp("Brasilis Field",1,1); Pick("bra_fild");
+F5: Restrict("Pre-RE",5);
+	setarray @c[2],180,178,231,160,191,172,228,194,224,203,190,223,234,177,194,175,172,172;
+	Disp("Comodo Field",1,9); Pick("cmd_fild");
+F6: Restrict("RE");
+	setarray @c[2],371,212;
+	Disp("Dewata Field",1,1); Pick("dew_fild");
+F7: Restrict("RE");
+	setarray @c[2],97,314;
+	Disp("Eclage Field",1,1); Pick("ecl_fild");
+F8: Restrict("Pre-RE",2,10);
+	setarray @c[2],142,225,182,141,187,228,185,173,216,173,195,148,272,220,173,214,207,174,196,200;
+	Disp("Einbroch Field",1,10); Pick("ein_fild");
+F9: Restrict("RE");
+	setarray @c[2],143,132,143,217;
+	Disp("El Dicastes Field",1,2); Pick("dic_fild");
+F10: Restrict("Pre-RE",13,15);
+	 setarray @c[0],46,199,213,204,195,212,257,192,188,171,166,263,248,158,195,191,186,183,221,117,178,218,136,328,240,181,235,235,211,185;
+	 Disp("Geffen Field",0,14); Pick("gef_fild",1);
+F11: setarray @c[2],220,227;
+	 Disp("Gonryun Field",1,1); Pick("gon_fild");
+F12: Restrict("Pre-RE",3,7);
+	 setarray @c[2],268,101,222,193,232,185,252,189,196,106,216,220,227,197;
+	 Disp("Hugel Field",1,7); Pick("hu_fild");
+F13: setarray @c[2],240,179,185,235,240,226;
+	 Disp("Lighthalzen Field",1,3); Pick("lhz_fild");
+F14: setarray @c[2],229,187;
+	 Disp("Louyang Field",1,1); Pick("lou_fild");
+F15: setarray @c[2],115,145;
+	 Disp("Lutie Field",1,1); Pick("xmas_fild");
+F16: Restrict("RE");
+	 setarray @c[2],40,272,207,180;
+	 Disp("Malaya Field",1,2); Pick("ma_fild");
+F17: setarray @c[2],35,236,35,262,84,365;
+	 Disp("Manuk Field",1,3); Pick("man_fild");
+F18: setarray @c[2],204,120,175,193,208,213,179,180,181,240,195,270,235,202,188,215,205,144,245,223,180,206,196,208;
+	 Disp("Mjolnir Field",1,12); Pick("mjolnir_");
+F19: setarray @c[2],82,104,131,147;
+	 Disp("Moscovia Field",1,2); Pick("mosk_fild");
+F20: setarray @c[2],215,229,167,234;
+	 Disp("Niflheim Field",1,2); Pick("nif_fild");
+F21: Restrict("Pre-RE",5,11);
+	 setarray @c[2],158,206,151,219,205,148,186,247,134,204,193,235,200,177,137,189,201,224,160,205,194,150;
+	 Disp("Payon Forest",1,11); Pick("pay_fild");
+F22: setarray @c[0],208,227,190,206,240,206,190,143,307,252,239,213,185,188,193,194,187,218,210,183,195,149,198,164;
+	 Disp("Prontera Field",0,11); Pick("prt_fild",1);
+F23: Restrict("Pre-RE",2,7,9,10,11,13);
+	 setarray @c[2],192,162,235,166,202,206,202,208,225,202,202,214,263,196,217,201,87,121,277,181,221,185,175,200,174,197;
+	 Disp("Rachel Field",1,13); Pick("ra_fild");
+F24: setarray @c[2],219,205,177,206,194,182,224,170,198,216,156,187,185,263,206,228,208,238,209,223,85,97,207,202,31,195,38,195;
+	 Disp("Sograt Desert 1:Sograt Desert 2:Sograt Desert 3:Sograt Desert 7:Sograt Desert 11:Sograt Desert 12:Sograt Desert 13:Sograt Desert 16:Sograt Desert 17:Sograt Desert 18:Sograt Desert 19:Sograt Desert 20:Sograt Desert 21:Sograt Desert 22");
+	 Pick("","moc_fild01","moc_fild02","moc_fild03","moc_fild07","moc_fild11","moc_fild12","moc_fild13","moc_fild16","moc_fild17","moc_fild18","moc_fild19","moc_fild20","moc_fild21","moc_fild22");
+F25: setarray @c[2],175,186,236,184,188,204;
+	 Disp("Splendide Field",1,3); Pick("spl_fild");
+F26: setarray @c[2],217,206,223,221,237,215,202,197;
+	 Disp("Umbala Field",1,4); Pick("um_fild");
+F27: Restrict("Pre-RE",5);
+	 setarray @c[2],186,175,196,370,222,45,51,250,202,324,150,223,149,307;
+	 Disp("Veins Field",1,7); Pick("ve_fild");
+F28: Restrict("Pre-RE",5,10);
+	 setarray @c[2],189,224,192,207,221,157,226,199,223,177,187,232,231,174,196,203,183,214,200,124,195,226,210,304;
+	 Disp("Yuno Field",1,12); Pick("yuno_fild");
+
+// --------------------------------------------------
+	Dungeons:
+// --------------------------------------------------
+menu	"Abyss Lakes",D1, "Amatsu Dungeon",D2, "Anthell",D3,
+    	"Ayothaya Dungeon",D4, "Beach Dungeon",D5, "Bifrost Tower",D41,
+    	"Bio Labs",D6, "Brasilis Dungeon",D7, "Byalan Dungeon",D8, "Clock Tower",D9,
+    	"Coal Mines",D10, "Culvert",D11, "Cursed Abbey",D12, "Dewata Dungeon",D13,
+    	"Einbroch Dungeon",D14, "Gefenia",D15, "Geffen Dungeon",D16,
+    	"Glast Heim",D17, "Gonryun Dungeon",D18, "Hidden Dungeon",D19,
+    	"Ice Dungeon",D20, "Juperos",D21, "Kiel Dungeon",D22, "Louyang Dungeon",D23,
+    	"Magma Dungeon",D24, "Malangdo Dungeon",D25, "Moscovia Dungeon",D26,
+    	"Nidhogg's Dungeon",D27, "Odin Temple",D28, "Orc Dungeon",D29,
+    	"Payon Dungeon",D30, "Pyramids",D31, "Rachel Sanctuary",D32,
+    	"Scaraba Hole",D33, "Sphinx",D34, "Sunken Ship",D35, "Thanatos Tower",D36,
+    	"Thor Volcano",D37, "Toy Factory",D38, "Turtle Dungeon",D39, "Umbala Dungeon",D40;
+
+D1: setarray @c[2],261,272,275,270,116,27;
+	Disp("Abyss Lakes",1,3); Pick("abyss_");
+D2: setarray @c[2],228,11,34,41,119,14;
+	Disp("Amatsu Dungeon",1,3); Pick("ama_dun");
+D3: setarray @c[2],35,262,168,170;
+	Disp("Anthell",1,2); Pick("anthell");
+D4: setarray @c[2],275,19,24,26;
+	Disp("Ancient Shrine Maze:Inside Ancient Shrine"); Pick("ayo_dun");
+D5: setarray @c[2],266,67,255,244,23,260;
+	Disp("Beach Dungeon",1,3); Pick("","beach_dun","beach_dun2","beach_dun3");
+D6: Restrict("RE",4);
+	setarray @c[2],150,288,150,18,140,134,244,52;
+	Disp("Bio Lab",1,4); Pick("lhz_dun");
+D7: Restrict("RE");
+	setarray @c[2],87,47,262,262;
+	Disp("Brasilis Dungeon",1,2); Pick("bra_dun");
+D8: Restrict("RE",6);
+	setarray @c[0],168,168,253,252,236,204,32,63,26,27,141,187;
+	Disp("Byalan Dungeon",1,6); Pick("iz_dun",1);
+D9: setarray @c[2],199,159,148,283,65,147,56,155,297,25,127,169,277,178,268,74;
+	Disp("Clock Tower 1:Clock Tower 2:Clock Tower 3:Clock Tower 4:Basement 1:Basement 2:Basement 3:Basement 4");
+	Pick("","c_tower1","c_tower2","c_tower3","c_tower4","alde_dun01","alde_dun02","alde_dun03","alde_dun04");
+D10: setarray @c[2],52,17,381,343,302,262;
+	 Disp("Coal Mines",1,3); Pick("mjo_dun");
+D11: setarray @c[2],131,247,19,19,180,169,100,92;
+	 Disp("Culvert",1,4); Pick("","prt_sewb1","prt_sewb2","prt_sewb3","prt_sewb4");
+D12: setarray @c[2],51,14,150,11,120,10;
+	 Disp("Cursed Abbey",1,3); Pick("abbey");
+D13: Restrict("RE");
+	 setarray @c[2],285,160,299,29;
+	 Disp("Dewata Dungeon",1,2); Pick("dew_dun");
+D14: setarray @c[2],22,14,292,290;
+	 Disp("Einbroch Dungeon",1,2); Pick("ein_dun");
+D15: setarray @c[2],40,103,203,34,266,168,130,272;
+	 Disp("Gefenia",1,4); Pick("gefenia",0);
+D16: setarray @c[0],104,99,115,236,106,132,203,200;
+	 Disp("Geffen Dungeon",1,4); Pick("gef_dun",1);
+D17: setarray @c[2],370,304,199,29,104,25,150,15,157,287,147,15,258,255,108,291,171,283,68,277,156,7,12,7,133,271,224,274,14,70,150,14;
+	 Disp("Entrance:Castle 1:Castle 2:Chivalry 1:Chivalry 2:Churchyard:Culvert 1:Culvert 2:Culvert 3:Culvert 4:St. Abbey:Staircase Dungeon:Underground Cave 1:Underground Cave 2:Underground Prison 1:Underground Prison 2");
+	 Pick("","glast_01","gl_cas01","gl_cas02","gl_knt01","gl_knt02","gl_chyard","gl_sew01","gl_sew02","gl_sew03","gl_sew04","gl_church","gl_step","gl_dun01","gl_dun02","gl_prison","gl_prison1");
+D18: setarray @c[2],153,53,28,113,68,16;
+	 Disp("Gonryun Dungeon",1,3); Pick("gon_dun");
+D19: setarray @c[2],176,7,93,20,23,8;
+	 Disp("Hidden Dungeon",1,3); Pick("prt_maze");
+D20: setarray @c[2],157,14,151,155,149,22,33,158;
+	 Disp("Ice Dungeon",1,4); Pick("ice_dun");
+D21: setarray @c[2],140,51,53,247,37,63,150,285;
+	 Disp("Entrance:Juperos 1:Juperos 2:Core");
+	 Pick("","jupe_cave","juperos_01","juperos_02","jupe_core");
+D22: setarray @c[2],28,226,41,198;
+	 Disp("Kiel Dungeon",1,2); Pick("kh_dun");
+D23: setarray @c[2],218,196,282,20,165,38;
+	 Disp("The Royal Tomb:Inside the Royal Tomb:Suei Long Gon"); Pick("lou_dun");
+D24: setarray @c[2],126,68,47,30;
+	 Disp("Magma Dungeon",1,2); Pick("mag_dun");
+D25: Restrict("RE");
+	 setarray @c[2],33,230;
+	 Disp("Malangdo Dungeon",1,1); Pick("mal_dun");
+D26: setarray @c[2],189,48,165,30,32,135;
+	 Disp("Moscovia Dungeon",1,3); Pick("mosk_dun");
+D27: setarray @c[2],61,239,60,271;
+	 Disp("Nidhogg's Dungeon",1,2); Pick("nyd_dun");
+D28: setarray @c[2],298,167,224,149,266,280;
+	 Disp("Odin Temple",1,3); Pick("odin_tem");
+D29: setarray @c[2],32,170,21,185;
+	 Disp("Orc Dungeon",1,2); Pick("orcsdun");
+D30: setarray @c[0],21,183,19,33,19,63,155,159,201,204;
+	 Disp("Payon Dungeon",1,5); Pick("pay_dun",1);
+D31: Restrict("RE",7,8);
+	 setarray @c[2],192,9,10,192,100,92,181,11,94,96,192,8,94,96,192,8;
+	 Disp("Pyramids 1:Pyramids 2:Pyramids 3:Pyramids 4:Basement 1:Basement 2:Basement 1 - Nightmare Mode:Basement 2 - Nightmare Mode");
+	 Pick("","moc_pryd01","moc_pryd02","moc_pryd03","moc_pryd04","moc_pryd05","moc_pryd06","moc_prydn1","moc_prydn2");
+D32: setarray @c[2],140,11,32,21,8,149,204,218,150,9;
+	 Disp("Rachel Sanctuary",1,5); Pick("ra_san");
+D33: Restrict("RE");
+	 setarray @c[2],364,44,101,141;
+	 Disp("Scaraba Hole",1,2); Pick("dic_dun");
+D34: setarray @c[2],288,9,149,81,210,54,10,222,100,99;
+	 Disp("Sphinx",1,5); Pick("","in_sphinx1","in_sphinx2","in_sphinx3","in_sphinx4","in_sphinx5");
+D35: setarray @c[2],69,24,102,27;
+	 Disp("Sunken Ship",1,2); Pick("treasure");
+D36: setarray @c[2],150,39,150,136,220,158,59,143,62,11,89,221,35,166,93,148,29,107,159,138,19,20,130,52;
+	 Disp("Thanatos Tower",1,12); Pick("tha_t");
+D37: setarray @c[2],21,228,75,205,34,272;
+	 Disp("Thor Volcano",1,3); Pick("thor_v");
+D38: setarray @c[2],205,15,129,133;
+	 Disp("Toy Factory",1,2); Pick("xmas_dun");
+D39: setarray @c[2],154,49,148,261,132,189,100,192;
+	 Disp("Entrance:Turtle Dungeon 1:Turtle Dungeon 2:Turtle Dungeon 3"); Pick("tur_dun");
+D40: Restrict("Pre-RE",1,2);
+	 setarray @c[2],42,31,48,30,204,78;
+	 Disp("Carpenter's Shop in the Tree:Passage to a Foreign World:Hvergermil's Fountain");
+	 Pick("","um_dun01","um_dun02","yggdrasil01");
+D41: Restrict("RE");
+	 setarray @c[2],57,13,64,88,45,14,26,23;
+	 Disp("Bifrost Tower",1,4); Pick("ecl_tdun");
+
+// --------------------------------------------------
+	Castles:
+// --------------------------------------------------
+menu	"Aldebaran Castles",C1, "Geffen Castles",C2, "Payon Castles",C3,
+    	"Prontera Castles",C4, "Arunafeltz Castles",C5, "Schwaltzvalt Castles",C6;
+
+C1: setarray @c[2],48,83,95,249,142,85,239,242,264,90;
+	Disp("Neuschwanstein:Hohenschwangau:Nuenberg:Wuerzburg:Rothenburg");
+	Pick("","alde_gld","alde_gld","alde_gld","alde_gld","alde_gld");
+C2: setarray @c[2],214,75,308,240,143,240,193,278,305,87;
+	Disp("Repherion:Eeyolbriggar:Yesnelph:Bergel:Mersetzdeitz");
+	Pick("","gef_fild13","gef_fild13","gef_fild13","gef_fild13","gef_fild13");
+C3: setarray @c[2],121,233,295,116,317,293,140,160,204,266;
+	Disp("Bright Arbor:Scarlet Palace:Holy Shadow:Sacred Altar:Bamboo Grove Hill");
+	Pick("","pay_gld","pay_gld","pay_gld","pay_gld","pay_gld");
+C4: setarray @c[2],134,65,240,128,153,137,111,240,208,240;
+	Disp("Kriemhild:Swanhild:Fadhgridh:Skoegul:Gondul");
+	Pick("","prt_gld","prt_gld","prt_gld","prt_gld","prt_gld");
+C5: setarray @c[2],158,272,83,47,68,155,299,345,292,107;
+	Disp("Mardol:Cyr:Horn:Gefn:Banadis");
+	Pick("","aru_gld","aru_gld","aru_gld","aru_gld","aru_gld");
+C6: setarray @c[2],293,100,288,252,97,196,137,90,71,315;
+	Disp("Himinn:Andlangr:Viblainn:Hljod:Skidbladnir");
+	Pick("","sch_gld","sch_gld","sch_gld","sch_gld","sch_gld");
+
+// --------------------------------------------------
+	Guild_Dungeons:
+// --------------------------------------------------
+menu	"Baldur",G1, "Luina",G2, "Valkyrie",G3, "Britoniah",G4,
+    	"Arunafeltz",G5, "Schwaltzvalt",G6;
+
+G1: Restrict("RE",2,3);
+	setarray @c[2],119,93,119,93,120,130;
+	Disp("Baldur F1:Baldur F2:Hall of Abyss");
+	Pick("","gld_dun01","gld_dun01_2","gld2_pay");
+G2: Restrict("RE",2,3);
+	setarray @c[2],39,161,39,161,147,155;
+	Disp("Luina F1:Luina F2:Hall of Abyss");
+	Pick("","gld_dun02","gld_dun02_2","gld2_ald");
+G3: Restrict("RE",2,3);
+	setarray @c[2],50,44,50,44,140,132;
+	Disp("Valkyrie F1:Valkyrie F2:Hall of Abyss");
+	Pick("","gld_dun03","gld_dun03_2","gld2_prt");
+G4: Restrict("RE",2,3);
+	setarray @c[2],116,45,116,45,152,118;
+	Disp("Britoniah F1:Britoniah F2:Hall of Abyss");
+	Pick("","gld_dun04","gld_dun04_2","gld2_gef");
+G5: Go("arug_dun01",199,195);
+G6: Go("schg_dun01",200,124);
+
+// --------------------------------------------------
+	Instances:
+// --------------------------------------------------
+menu	"Bakonawa Lake",I1, "Bangungot Hospital 2F",I2, "Buwaya Cave",I3,
+    	"Endless Tower",I4, "Hazy Forest",I5, "Malangdo Culvert",I6, "Nidhoggur's Nest",I7,
+    	"Octopus Cave",I8, "Old Glast Heim",I9, "Orc's Memory",I10, "Sealed Shrine",I11,
+    	"Wolfchev's Laboratory",I12;
+
+I1: Restrict("RE");
+	Go("ma_scene01",172,175);
+I2: Restrict("RE");
+	Go("ma_dun01",151,8);
+I3: Restrict("RE");
+	Go("ma_fild02",316,317);
+I4: Go("e_tower",72,112);
+I5: Restrict("RE");
+	Go("bif_fild01",161,334);
+I6: Restrict("RE");
+	Go("mal_in01",164,21);
+I7: Go("nyd_dun02",95,193);
+I8: Restrict("RE");
+	Go("mal_dun01",152,230);
+I9: Restrict("RE");
+	Go("glast_01",204,268);
+I10: Go("gef_fild10",240,198);
+I11: Go("monk_test",306,143);
+I12: Restrict("RE");
+	Go("lhz_dun04",148,269);
+
+// --------------------------------------------------
+	Special:
+// --------------------------------------------------
+menu	"Auction Hall",S1, "Battlegrounds",S2, "Casino",S3, "Eden Group Headquarters",S4,
+    	"Gonryun Arena",S5, "Izlude Arena",S6, "Monster Race Arena",S7, "Turbo Track",S8;
+
+S1: Go("auction_01",22,68);
+S2: Go("bat_room",154,150);
+S3: Go("cmd_in02",179,129);
+S4: Restrict("RE");
+	Go("moc_para01",31,14);
+S5: Go("gon_test",48,10);
+S6: Go("arena_room",100,88);
+S7: Go("p_track01",62,41);
+S8: Go("turbo_room",99,114);
+}
+
+Function Identifier {
+	set .@Price, 100;	// Zeny per identify
+	getinventorylist;
+	for(set .@i,0; .@i<@inventorylist_count; set .@i,.@i+1) {
+		if (@inventorylist_identify[.@i]) continue;
+		if (Zeny < .@Price) {
+			dispbottom "It costs "+.@Price+" to identify an item."; break; }
+		set Zeny, Zeny-.@Price;
+		delitem2 @inventorylist_id[.@i],1,0,0,0,0,0,0,0;
+		getitem @inventorylist_id[.@i],1;
+		setarray .@Total[0], .@Total[0]+1, .@Total[1]+.@Price; }
+	if (!.@Total[0]) {
+		message strcharinfo(0),"No items identified."; end; }
+	specialeffect2 154;
+	message strcharinfo(0),"Identified "+.@Total[0]+" items"+((.@Total[1])?" for "+.@Total[1]+" Zeny":"")+".";
+	end;
+}
+
+Function Stylist {
+	setarray .@Styles[1],
+		getbattleflag("max_cloth_color"),
+		getbattleflag("max_hair_style"),
+		getbattleflag("max_hair_color");
+	setarray .@Look[1],
+		LOOK_CLOTHES_COLOR,
+		LOOK_HAIR,
+		LOOK_HAIR_COLOR;
+	set .@s, select(" ~ Cloth color: ~ Hairstyle: ~ Hair color");
+	set .@Revert, getlook(.@Look[.@s]);
+	set .@Style,1;
+	while(1) {
+		setlook .@Look[.@s], .@Style;
+		message strcharinfo(0),"This is style #"+.@Style+".";
+		set .@menu$, " ~ Next (^0055FF"+((.@Style!=.@Styles[.@s])?.@Style+1:1)+"^000000): ~ Previous (^0055FF"+((.@Style!=1)?.@Style-1:.@Styles[.@s])+"^000000): ~ Jump to...: ~ Revert to original (^0055FF"+.@Revert+"^000000)";
+		switch(select(.@menu$)) {
+		case 1:
+			set .@Style, ((.@Style != .@Styles[.@s]) ? .@Style+1 : 1);
+			break;
+		case 2:
+			set .@Style, ((.@Style != 1) ? .@Style-1 : .@Styles[.@s]);
+			break;
+		case 3:
+			message strcharinfo(0),"Choose a style between 1 - "+.@Styles[.@s]+".";
+			input .@Style,0,.@Styles[.@s];
+			if (!.@Style)
+				set .@Style, rand(1,.@Styles[.@s]);
+			break;
+		case 4:
+			set .@Style, .@Revert;
+			setlook .@Look[.@s], .@Revert;
+			break;
+		}
+	}
+}	
+}
+
+
+prontera,153,193,6	script	Grandmaster	666,{
+function JChange;
+function Reset;
+function Rental;
+function Plat;
+OnInit:
+if ($@wait1 == 0) {
+	waitingroom "Job stuff!",0;
+	set $@wait1,1;
+}
+setarray .Rebirth[0],99,50;	// Minimum base level, job level to rebirth OR change to third class
+setarray .JobReq[0],10,40;	// Minimum job level to turn into 1st class, 2nd class
+.ThirdClass = 0;			// Enable third classes? (1: yes / 0: no)
+.SecondExpanded = 1;		// Enable new expanded second classes: Ex. Super Novice, Kagerou/Oboro, Rebellion? (1: yes / 0: no)
+.SNovice = 45;				// Minimum base level to turn into Super Novice
+.LastJob = 1;				// Enforce linear class changes? (1: yes / 0: no)
+.SkillPointCheck = 1;		// Force player to use up all skill points? (1: yes / 0: no)
+.Platinum = 1;				// Get platinum skills automatically? (1: yes / 0: no)
+
+if ($@wait1) {
+	mes "[Grandmaster]";
+	mes "Tsssscchhhh..";
+	mes "Don't waste my time.";
+	next;
+	Switch (Select("Job Change[Free]:Reset[Paid]:Rental[Free]:Platinum Skills[Free]:Nothing Really..")) {
+		case 1:
+			JChange();
+			break;
+		case 2:
+			Reset();
+			break;
+		case 3:
+			Rental();
+			break;
+		case 4:
+			Plat();
+			break;
+		default:
+			switch (rand(1,2)) {
+				case 1:
+					mes "[Grandmaster]";
+					mes "Allow me to kill you for wasting my time.";	
+					next;
+					percentheal -100,0;
+					break;
+				default:
+					mes "[Grandmaster]";
+					mes "I swear I'll kill you one day.";
+					break;
+			}
+
+	}
+		
+	close;
+}
+
+Function JChange {
+function Job_Menu;
+
+	mes "[Grandmaster]";
+	if (Class > Job_Soul_Linker) {
+		mes "No more jobs are available.";
+		close;
+	}
+	if (checkfalcon() || checkcart() || checkriding() || ismounting()) {
+		mes "Please remove your " +
+			((checkfalcon()) ? "falcon" : "") +
+			((checkcart()) ? "cart" : "") +
+			((checkriding()) ? "Peco" : "") +
+			((ismounting()) ? "mount" : "") +
+			" before proceeding.";
+		close;
+	}
+	if (.SkillPointCheck && SkillPoint) {
+		mes "Please use all your skill points before proceeding.";
+		close;
+	}
+
+	.@eac = eaclass();
+	.@i = ((.ThirdClass) ? roclass(.@eac&EAJ_UPPERMASK) : Class);
+	if (.@i >= Job_Knight && .@i <= Job_Crusader2) {
+		if (BaseLevel < .Rebirth[0] || JobLevel < .Rebirth[1]) {
+			.@blvl = .Rebirth[0] - BaseLevel;
+			.@jlvl = .Rebirth[1] - JobLevel;
+			mes "You need " +
+				((.@blvl > 0) ? .@blvl + " more base levels " + ((.@jlvl > 0) ? "/ " : "") : "") +
+				((.@jlvl > 0) ? .@jlvl + " more job levels " : "") + "to continue.";
+			close;
+		}
+		if (Class > Job_Crusader2) {
+			mes "Switch to third class?";
+			next;
+			Job_Menu(roclass(.@eac|EAJL_THIRD));
+			close;
+		}
+		while(1) {
+			mes "Select an option.";
+			next;
+			.@i = select(" ~ ^0055FFRebirth^000000:" + ((.ThirdClass) ? " ~ ^FF0000Third Class^000000" : "") + ": ~ ^777777Cancel^000000");
+			if (.@i == 3)
+				close;
+			mes "[Grandmaster]";
+			mes "Are you sure?";
+			next;
+			Job_Menu(((.@i == 1) ? Job_Novice_High : roclass(.@eac|EAJL_THIRD)));
+			mes "[Grandmaster]";
+		}
+	}
+	.@j1 = roclass(.@eac|EAJL_2_1);
+	.@j2 = roclass(.@eac|EAJL_2_2);
+	if ((.@eac&EAJ_UPPERMASK) == EAJ_SUPER_NOVICE)
+		setarray .@exp[0], roclass(.@eac|EAJL_THIRD), 99;
+	if (Class == Job_Ninja || Class == Job_Gunslinger)
+		setarray .@exp[0], .@j1, 70;
+	if (.@exp[0] && .SecondExpanded) {
+		if (BaseLevel < .Rebirth[0] || JobLevel < .@exp[1]) {
+			.@blvl = .Rebirth[0] - BaseLevel;
+			.@jlvl = .@exp[1] - JobLevel;
+			mes "You need " +
+				((.@blvl > 0) ? .@blvl + " more base levels " + ((.@jlvl > 0) ? "/ " : "") : "") +
+				((.@jlvl > 0) ? .@jlvl + " more job levels " : "") + "to continue.";
+			close;
+		}
+		mes "Switch to " + jobname(.@exp[0]) + "?";
+		next;
+		Job_Menu(.@exp[0]);
+		close;
+	}
+	if (.@eac&EAJL_2)
+		if (.@eac&(EAJL_UPPER|EAJL_BABY) || roclass(.@eac|EAJL_UPPER) == -1) {
+			mes "No more jobs are available.";
+			close;
+		}
+	if ((.@eac&EAJ_BASEMASK) == EAJ_NOVICE) {
+		if (JobLevel < .JobReq[0])
+			mes "A job level of " + .JobReq[0] + " is required to change into the 1st Class.";
+		else if (Class == Job_Novice_High && .LastJob && lastJob) {
+			mes "Switch classes now?";
+			next;
+			Job_Menu(roclass((eaclass(lastJob)&EAJ_BASEMASK)|EAJL_UPPER));
+		} else {
+			switch(Class) {
+			case Job_Novice:
+				Job_Menu(
+					Job_Swordman,
+					Job_Mage,
+					Job_Archer,
+					Job_Acolyte,
+					Job_Merchant,
+					Job_Thief,
+					Job_SuperNovice,
+					Job_Taekwon,
+					Job_Gunslinger,
+					Job_Ninja,
+					Job_Baby
+				);
+				break;
+			case Job_Novice_High:
+				Job_Menu(
+					Job_Swordman_High,
+					Job_Mage_High,
+					Job_Archer_High,
+					Job_Acolyte_High,
+					Job_Merchant_High,
+					Job_Thief_High
+				);
+				break;
+			case Job_Baby:
+				Job_Menu(
+					Job_Baby_Swordman,
+					Job_Baby_Mage,
+					Job_Baby_Archer,
+					Job_Baby_Acolyte,
+					Job_Baby_Merchant,
+					Job_Baby_Thief,
+					Job_Super_Baby
+				);
+				break;
+			default:
+				mes "An error has occurred.";
+				break;
+			}
+		}
+		close;
+	}
+	if (roclass(.@eac|EAJL_2_1) == -1 || roclass(.@eac|EAJL_2_2) == -1)
+		mes "No more jobs are available.";
+	else if (!(.@eac&EAJL_2) && JobLevel < .JobReq[1])
+		mes "A job level of " + .JobReq[1] + " is required to change into the 2nd Class.";
+	else if (.LastJob && lastJob && (.@eac&EAJL_UPPER)) {
+		mes "Switch classes now?";
+		next;
+		Job_Menu(lastJob + Job_Novice_High);
+	} else
+		Job_Menu(.@j1, .@j2);
+	close;
+
+function Job_Menu {
+	while(1) {
+		if (getargcount() > 1) {
+			mes "Select a job.";
+			.@menu$ = "";
+			for (.@i = 0; .@i < getargcount(); .@i++)
+				.@menu$ = .@menu$ + " ~ " + jobname(getarg(.@i)) + ":";
+			.@menu$ = .@menu$+" ~ ^777777Cancel^000000";
+			next;
+			.@i = getarg(select(.@menu$) - 1, 0);
+			if (!.@i)
+				close;
+			if ((.@i == Job_SuperNovice || .@i == Job_Super_Baby) && BaseLevel < .SNovice) {
+				mes "[Grandmaster]";
+				mes "A base level of " + .SNovice + " is required to turn into a " + jobname(.@i) + ".";
+				close;
+			}
+			mes "[Grandmaster]";
+			mes "Are you sure?";
+			next;
+		} else
+			.@i = getarg(0);
+		if (select(" ~ Change into ^0055FF" + jobname(.@i) + "^000000 class: ~ ^777777" + ((getargcount() > 1) ? "Go back" : "Cancel") + "^000000") == 1) {
+			mes "[Grandmaster]";
+			mes "You are now " + callfunc("F_InsertArticle", jobname(.@i)) + "!";
+			if (.@i == Job_Novice_High && .LastJob)
+				lastJob = Class;
+			jobchange .@i;
+			if (.@i == Job_Novice_High)
+				resetlvl(1);
+			else if (.@i == Job_Baby) {
+				resetstatus;
+				resetskill;
+				set SkillPoint,0;
+			}
+			specialeffect2 EF_ANGEL2;
+			specialeffect2 EF_ELECTRIC;
+			if (.Platinum)
+				callsub Get_Platinum;
+			close;
+		}
+		if (getargcount() == 1)
+			return;
+		mes "[Grandmaster]";
+	}
+	end;
+}
+
+Get_Platinum:
+	skill "NV_FIRSTAID",1,SKILL_PERM;
+	switch (BaseClass) {
+	case Job_Novice:
+		if (Class != Job_SuperNovice)
+			skill "NV_TRICKDEAD",1,SKILL_PERM;
+		break;
+	case Job_Swordman:
+		skill "SM_MOVINGRECOVERY",1,SKILL_PERM;
+		skill "SM_FATALBLOW",1,SKILL_PERM;
+		skill "SM_AUTOBERSERK",1,SKILL_PERM;
+		break;
+	case Job_Mage:
+		skill "MG_ENERGYCOAT",1,SKILL_PERM;
+		break;
+	case Job_Archer:
+		skill "AC_MAKINGARROW",1,SKILL_PERM;
+		skill "AC_CHARGEARROW",1,SKILL_PERM;
+		break;
+	case Job_Acolyte:
+		skill "AL_HOLYLIGHT",1,SKILL_PERM;
+		break;
+	case Job_Merchant:
+		skill "MC_CARTREVOLUTION",1,SKILL_PERM;
+		skill "MC_CHANGECART",1,SKILL_PERM;
+		skill "MC_LOUD",1,SKILL_PERM;
+		break;
+	case Job_Thief:
+		skill "TF_SPRINKLESAND",1,SKILL_PERM;
+		skill "TF_BACKSLIDING",1,SKILL_PERM;
+		skill "TF_PICKSTONE",1,SKILL_PERM;
+		skill "TF_THROWSTONE",1,SKILL_PERM;
+		break;
+	default:
+		break;
+	}
+	switch (BaseJob) {
+	case Job_Knight:
+		skill "KN_CHARGEATK",1,SKILL_PERM;
+		break;
+	case Job_Priest:
+		skill "PR_REDEMPTIO",1,SKILL_PERM;
+		break;
+	case Job_Wizard:
+		skill "WZ_SIGHTBLASTER",1,SKILL_PERM;
+		break;
+	case Job_Blacksmith:
+		skill "BS_UNFAIRLYTRICK",1,SKILL_PERM;
+		skill "BS_GREED",1,SKILL_PERM;
+		break;
+	case Job_Hunter:
+		skill "HT_PHANTASMIC",1,SKILL_PERM;
+		break;
+	case Job_Assassin:
+		skill "AS_SONICACCEL",1,SKILL_PERM;
+		skill "AS_VENOMKNIFE",1,SKILL_PERM;
+		break;
+	case Job_Crusader:
+		skill "CR_SHRINK",1,SKILL_PERM;
+		break;
+	case Job_Monk:
+		skill "MO_KITRANSLATION",1,SKILL_PERM;
+		skill "MO_BALKYOUNG",1,SKILL_PERM;
+		break;
+	case Job_Sage:
+		skill "SA_CREATECON",1,SKILL_PERM;
+		skill "SA_ELEMENTWATER",1,SKILL_PERM;
+		skill "SA_ELEMENTGROUND",1,SKILL_PERM;
+		skill "SA_ELEMENTFIRE",1,SKILL_PERM;
+		skill "SA_ELEMENTWIND",1,SKILL_PERM;
+		break;
+	case Job_Rogue:
+		skill "RG_CLOSECONFINE",1,SKILL_PERM;
+		break;
+	case Job_Alchemist:
+		skill "AM_BIOETHICS",1,SKILL_PERM;
+		break;
+	case Job_Bard:
+		skill "BA_PANGVOICE",1,SKILL_PERM;
+		break;
+	case Job_Dancer:
+		skill "DC_WINKCHARM",1,SKILL_PERM;
+		break;
+	default:
+		break;
+	}
+	return;
+}
+
+Function Reset {
+
+	.@ResetStat  = 5000;	// Zeny for stat reset
+	.@ResetSkill = 5000;	// Zeny for skill reset
+	.@ResetBoth  = 9000;	// Zeny for resetting both together
+
+	mes "[Grandmaster]";
+	mes "I am the Grandmaster.";
+	mes "Reset Stats: "  + callfunc("F_InsertComma", .@ResetStat)  + "z";
+	mes "Reset Skills: " + callfunc("F_InsertComma", .@ResetSkill) + "z";
+	mes "Reset Both: "   + callfunc("F_InsertComma", .@ResetBoth)  + "z";
+	mes "Please select the service you want:";
+	next;
+	switch(select("^FF3355Reset Skills:Reset Stats:Reset Both^000000:Cancel")) {
+	case 1:
+		mes "[Grandmaster]";
+		if (Zeny < .@ResetSkill) {
+			mes "Sorry, you don't have enough Zeny.";
+			close;
+		}
+		Zeny -= .@ResetSkill;
+		sc_end SC_ALL;
+		resetskill;
+		mes "There you go!";
+		close;
+	case 2:
+		mes "[Grandmaster]";
+		if (Zeny < .@ResetStat) {
+			mes "Sorry, you don't have enough Zeny.";
+			close;
+		}
+		Zeny -= .@ResetStat;
+		resetstatus;
+		mes "There you go!";
+		close;
+	case 3:
+		mes "[Grandmaster]";
+		if (Zeny < .@ResetBoth) {
+			mes "Sorry, you don't have enough Zeny.";
+			close;
+		}
+		Zeny -= .@ResetBoth;
+		sc_end SC_ALL;
+		resetskill;
+		resetstatus;
+		mes "There you go!";
+		close;
+	case 4:
+		close;
+	}
+}
+
+Function Rental {
+	if (ismounting()) {
+		message strcharinfo(0),"You must first remove your mount.";
+		end;
+	} else if ((eaclass()&EAJ_THIRDMASK==EAJ_RANGER) && !countitem(6124)) {
+		if (!checkfalcon() && getskilllv("HT_FALCON") && !checkwug()) {
+			if(select(" ~ Falcon: ~ Warg")==1) setfalcon;
+			else getitem 6124,1; //Wolf's_Flute
+		} else getitem 6124,1; //Wolf's_Flute
+	} else if ((eaclass()&EAJ_THIRDMASK==EAJ_MECHANIC) && !checkcart() && getskilllv("MC_PUSHCART")) {
+		if (!checkmadogear() && getskilllv("NC_MADOLICENCE")) {
+			if(select(" ~ Cart: ~ Mado")==1) setcart;
+			else setmadogear;
+		} else setcart;
+	} else if (!checkcart() && getskilllv("MC_PUSHCART")) setcart;
+	else if (!checkfalcon() && getskilllv("HT_FALCON") && !checkwug()) setfalcon;
+	else if (!checkriding() && !checkdragon() && getskilllv("KN_RIDING")) {
+		if (eaclass()&EAJ_THIRDMASK==EAJ_RUNE_KNIGHT) setdragon;
+		else setriding;
+	} else if (!checkmadogear() && getskilllv("NC_MADOLICENCE")) setmadogear;
+	else {
+		message strcharinfo(0),"You do not meet requirements to rent.";
+		end;
+	}
+	specialeffect2 EF_TEIHIT3;
+	end;
+}
+
+Function Plat {
+	mes "[Grandmaster]";
+	mes "I can give you the special skills available to your job.";
+	mes "Would you like these skills now?";
+	next;
+	if (select("Yes Please:No") == 2) {
+		mes "[Grandmaster]";
+		mes "Have a nice day... >.>";
+		close;
+	}
+	skill "NV_FIRSTAID",1,SKILL_PERM;
+	switch (BaseClass) {
+	case Job_Novice:
+		if (Class != Job_SuperNovice)
+			skill "NV_TRICKDEAD",1,SKILL_PERM;
+		break;
+	case Job_Swordman:
+		skill "SM_MOVINGRECOVERY",1,SKILL_PERM;
+		skill "SM_FATALBLOW",1,SKILL_PERM;
+		skill "SM_AUTOBERSERK",1,SKILL_PERM;
+		break;
+	case Job_Mage:
+		skill "MG_ENERGYCOAT",1,SKILL_PERM;
+		break;
+	case Job_Archer:
+		skill "AC_MAKINGARROW",1,SKILL_PERM;
+		skill "AC_CHARGEARROW",1,SKILL_PERM;
+		break;
+	case Job_Acolyte:
+		skill "AL_HOLYLIGHT",1,SKILL_PERM;
+		break;
+	case Job_Merchant:
+		skill "MC_CARTREVOLUTION",1,SKILL_PERM;
+		skill "MC_CHANGECART",1,SKILL_PERM;
+		skill "MC_LOUD",1,SKILL_PERM;
+		break;
+	case Job_Thief:
+		skill "TF_SPRINKLESAND",1,SKILL_PERM;
+		skill "TF_BACKSLIDING",1,SKILL_PERM;
+		skill "TF_PICKSTONE",1,SKILL_PERM;
+		skill "TF_THROWSTONE",1,SKILL_PERM;
+		break;
+	default:
+		break;
+	}
+	switch (BaseJob) {
+	case Job_Knight:
+		skill "KN_CHARGEATK",1,SKILL_PERM;
+		break;
+	case Job_Priest:
+		skill "PR_REDEMPTIO",1,SKILL_PERM;
+		break;
+	case Job_Wizard:
+		skill "WZ_SIGHTBLASTER",1,SKILL_PERM;
+		break;
+	case Job_Blacksmith:
+		skill "BS_UNFAIRLYTRICK",1,SKILL_PERM;
+		skill "BS_GREED",1,SKILL_PERM;
+		break;
+	case Job_Hunter:
+		skill "HT_PHANTASMIC",1,SKILL_PERM;
+		break;
+	case Job_Assassin:
+		skill "AS_SONICACCEL",1,SKILL_PERM;
+		skill "AS_VENOMKNIFE",1,SKILL_PERM;
+		break;
+	case Job_Crusader:
+		skill "CR_SHRINK",1,SKILL_PERM;
+		break;
+	case Job_Monk:
+		skill "MO_KITRANSLATION",1,SKILL_PERM;
+		skill "MO_BALKYOUNG",1,SKILL_PERM;
+		break;
+	case Job_Sage:
+		skill "SA_CREATECON",1,SKILL_PERM;
+		skill "SA_ELEMENTWATER",1,SKILL_PERM;
+		skill "SA_ELEMENTGROUND",1,SKILL_PERM;
+		skill "SA_ELEMENTFIRE",1,SKILL_PERM;
+		skill "SA_ELEMENTWIND",1,SKILL_PERM;
+		break;
+	case Job_Rogue:
+		skill "RG_CLOSECONFINE",1,SKILL_PERM;
+		break;
+	case Job_Alchemist:
+		skill "AM_BIOETHICS",1,SKILL_PERM;
+		break;
+	case Job_Bard:
+		skill "BA_PANGVOICE",1,SKILL_PERM;
+		break;
+	case Job_Dancer:
+		skill "DC_WINKCHARM",1,SKILL_PERM;
+		break;
+	default:
+		break;
+	}
+	mes "[Grandmaster]";
+	mes "There you go!";
+	close;
+}
+
+
+
+}

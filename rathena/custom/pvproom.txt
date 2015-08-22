@@ -1,0 +1,12 @@
+-	pvproom	-1,{
+OnPCLoadMapEvent:
+getmapxy(@mapname$,@mapx,@mapy,0);
+	if(@mapname$ == "pvp_y_1-2") {
+	announce strcharinfo(0)+" has entered pvp room2!",bc_all;
+	
+	}
+end;
+
+}
+
+pvp_y_1-2	mapflag	loadevent
