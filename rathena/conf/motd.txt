@@ -1,5 +1,0 @@
-// Internal default is limited to 128 lines.  If you need more, you will need to modify the MOTD_LINE_SIZE definition in pc.c
-Welcome to NWLRO! Base/Job/Drop Rate: 500x/500x/500x
-Server Uptime: 12nn - 1pm and 6pm to 12midnight!
-IMPORTANT NOTICE: PLEASE PLAY RESPONSIBLY. WE WILL NOT BE RESPONSIBLE TO WHATEVER YOU WILL GET YOURSELF INTO BY PLAYING THIS GAME.
-use @commands to see available commands for you to use.
