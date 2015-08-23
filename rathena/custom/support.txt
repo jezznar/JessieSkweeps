@@ -1,0 +1,12 @@
+-	script	#support	-1,{
+OnAgitStart:
+	atcommand "@channel delete #main";
+	atcommand "@channel delete #trade";
+	atcommand "@channel delete #support";
+
+OnAgitEnd:
+	atcommand "@channel create #main";
+	atcommand "@channel create #trade";
+	atcommand "@channel create #support";
+
+}
