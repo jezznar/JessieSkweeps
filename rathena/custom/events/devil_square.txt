@@ -13,9 +13,7 @@
 //= 1.0 First version, edited. [Euphy]
 //= 1.1 A revision. [Jezznar]
 //============================================================
- 
- 
- 
+  
 prontera,150,187,5	script	Devil Square Guardian#1	406,{
         set .@gm_level, 99; // GM level required to start/stop the event
         mes "[Devil Square Guardian]";
@@ -118,19 +116,19 @@ OnClock2300:
         killmonsterall "ordeal_1-1";
         announce "Devil Square is OPEN. The event will begin in 5 minutes.", bc_all;
         announce "Join now and win 250 CASHPOINTS!!",bc_all;
-        sleep 6000;
+        sleep 60000;
         announce "Devil Square will begin in 4 minutes.", bc_all;
         announce "Join now and win 250 CASHPOINTS!!",bc_all;
-        sleep 6000;
+        sleep 60000;
         announce "Devil Square will begin in 3 minutes.", bc_all;
         announce "Join now and win 250 CASHPOINTS!!",bc_all;
-        sleep 6000;
+        sleep 60000;
         announce "Devil Square will begin in 2 minutes.", bc_all;
         announce "Join now and win 250 CASHPOINTS!!",bc_all;
-        sleep 6000;
+        sleep 60000;
         announce "Devil Square will begin in 1 minute.", bc_all;
         announce "Join now and win 250 CASHPOINTS!!",bc_all;
-        sleep 5000;
+        sleep 50000;
         announce "Devil Square will begin in 10 seconds.", bc_all;
         announce getmapusers("ordeal_1-1")+" players inside.", bc_all;
         sleep 5000;
@@ -166,7 +164,7 @@ OnDevilDead:
                 announce "Devil Square : "+ .mob +" monsters remaining in round 1.", bc_map;
         else if ( .mob <= 0 ) {
                 mapannounce "ordeal_1-1","Devil Square is entering round 2 in 60 seconds", bc_map;
-                sleep 5000;
+                sleep 50000;
                 mapannounce "ordeal_1-1","Devil Square is entering round 2 in 10 seconds.", bc_map;
                 sleep 5000;
                 mapannounce "ordeal_1-1","Devil Square is entering round 2 in 5 seconds.", bc_map;
@@ -198,7 +196,7 @@ OnDevilDead2:
                 mapannounce "ordeal_1-1","Devil Square : "+ .mob +" monsters remaining in round 2.", bc_map;
         else if ( .mob <= 0 ) {
                 mapannounce "ordeal_1-1","Devil Square is entering round 3 in 60 seconds", bc_map;
-                sleep 5000;
+                sleep 50000;
                 mapannounce "ordeal_1-1","Devil Square is entering round 3 in 10 seconds.", bc_all;
                 sleep 5000;
                 mapannounce "ordeal_1-1","Devil Square is entering round 3 in 5 seconds.", bc_all;
